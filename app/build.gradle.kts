@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "pt.com.pokedex_android"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "pt.com.pokedex_android"
