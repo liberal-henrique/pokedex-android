@@ -2,6 +2,7 @@ package pt.com.pokedex_android.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -12,37 +13,43 @@ import pt.com.pokedex_android.domain.PokemonType
 
 class MainActivity : AppCompatActivity() {
     lateinit var recyclerView: RecyclerView
+
+    var pokemons = emptyList<Pokemon?>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         recyclerView = findViewById(R.id.rvPokemons)
+        if (pokemons.isEmpty()) {
+            Thread(Runnable {
+                loadPokemons()
+            }).start()
+        } else {
+            loadRecyclerView()
+        }
 
-        /*var charmander = Pokemon(
-            "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/004.png",
-            1,
-            "Charmander",
-            listOf(
-                PokemonType("Fire")
-            )
-        )
-        val pokemons = listOf(charmander, charmander, charmander, charmander, charmander)*/
+    }
 
-        Thread(Runnable {
-            loadPokemons()
-        }).start()
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
     }
 
     private fun loadPokemons() {
+
         val pokemonsApiResult = PokemonRepository.listPokemons()
 
         pokemonsApiResult?.results?.let {
-            val pokemons: List<Pokemon?> = it.map { pokemonResult ->
+            pokemons = it.map { pokemonResult ->
                 val number = pokemonResult.url
                     .replace("https://pokeapi.co/api/v2/pokemon/", "")
                     .replace("/", "").toInt()
                 val pokemonApiResult = PokemonRepository.getPokemon(number)
-                
+
                 pokemonApiResult?.let{
                     Pokemon(
                         pokemonApiResult.id,
@@ -53,11 +60,15 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
-            val layoutManager = LinearLayoutManager(this)
-            recyclerView.post{
-                recyclerView.layoutManager = layoutManager
-                recyclerView.adapter = PokemonAdapter(pokemons)
+
+            recyclerView.post {
+                loadRecyclerView()
             }
         }
+    }
+
+    private fun loadRecyclerView() {
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = PokemonAdapter(pokemons)
     }
 }
